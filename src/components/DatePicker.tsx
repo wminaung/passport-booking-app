@@ -1,50 +1,58 @@
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
-import { useState } from "react";
-import TimePicker from "./TimePicker/TimePicker";
-import { Button } from "@mui/material";
+import { Availability } from "../App";
 
-const DatePicker = () => {
-  const [value, setValue] = useState<Dayjs | null>(dayjs());
+interface DatePickerProp {
+  availability: Availability[];
+  date: Dayjs | null;
+  setDate: React.Dispatch<React.SetStateAction<Dayjs | null>>;
+  setMonth: React.Dispatch<React.SetStateAction<number>>;
+}
 
-  const [slots, setSlots] = useState([]);
-
-  const fetchAvailability = async (date: Dayjs | null) => {
-    const chosenDate = date?.format("DD-MM-YYYY");
-    const url = `http://localhost:5000/availability?date=${chosenDate}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    setSlots(data.slots);
+////////////////////////////////
+const DatePicker = ({
+  date,
+  setDate,
+  setMonth,
+  availability,
+}: DatePickerProp) => {
+  const handleChange = async (newValue: Dayjs | null) => {
+    setDate(newValue);
   };
 
-  const handleChange = (newValue: Dayjs | null) => {
-    setValue(newValue);
-    fetchAvailability(newValue);
+  const shouldDisableDate = (day: Dayjs) => {
+    const currentDay = day?.format("DD-MM-YYYY");
+
+    const isAvailableDay = availability.find(
+      (elem) => elem.date === currentDay
+    );
+
+    if (!isAvailableDay) {
+      return !!!isAvailableDay;
+    }
+
+    return !!isAvailableDay.slots.every((slot) => slot.availableSlot === 0);
   };
 
+  //////////
   return (
-    <div>
-      <div>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Stack spacing={3}>
-            <DesktopDatePicker
-              label="Date desktop"
-              inputFormat="DD/MM/YYYY"
-              value={value}
-              onChange={handleChange}
-              renderInput={(params) => <TextField {...params} />}
-            />
-          </Stack>
-        </LocalizationProvider>
-      </div>
-      <div>
-        <TimePicker slots={slots} />
-      </div>
-    </div>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Stack spacing={3}>
+        <DesktopDatePicker
+          label="Date desktop"
+          inputFormat="DD/MM/YYYY"
+          value={date}
+          onMonthChange={(month: Dayjs) => setMonth(month.month())}
+          shouldDisableDate={shouldDisableDate}
+          onChange={handleChange}
+          renderInput={(params) => <TextField {...params} />}
+        />
+      </Stack>
+    </LocalizationProvider>
   );
 };
 

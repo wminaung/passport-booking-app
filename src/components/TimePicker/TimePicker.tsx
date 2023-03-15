@@ -6,30 +6,35 @@ import {
   Radio,
   RadioGroup,
 } from "@mui/material";
+import { DialogProps } from "@mui/material/Dialog";
 import { useState } from "react";
 import "./TimePicker.css";
 
-const TimePicker = ({ slots }: any) => {
-  const [value, setValue] = useState("");
+export interface Slot {
+  time: string;
+  reserved: number;
+  totalAvailable: number;
+  availableSlot: number;
+}
 
-  // console.log("TP : slots : ", slots);
+interface TimePickerProp {
+  slots: Slot[];
+
+  handleClickOpen: (
+    scrollType: DialogProps["scroll"],
+    chosenTime: string
+  ) => void;
+}
+//////////////////////
+
+const TimePicker = ({ slots, handleClickOpen }: TimePickerProp) => {
+  const [value, setValue] = useState<string>("");
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     value: string
   ) => {
-    // console.log(value, "value");
     setValue(value);
-  };
-
-  const handleClick = () => {
-    console.log("This is", value, "hour");
-
-    const slot = slots.find((slot: any) => {
-      const time = Object.keys(slot)[0];
-      return time === value;
-    });
-    console.log(slot[value]);
   };
 
   return slots.length > 0 ? (
@@ -39,28 +44,37 @@ const TimePicker = ({ slots }: any) => {
         <RadioGroup
           aria-labelledby="demo-controlled-radio-buttons-group"
           name="controlled-radio-buttons-group"
-          value={value}
+          defaultValue={"10"}
           onChange={handleChange}
         >
-          {slots.map((slot: any, idx: number) => {
-            const time = Object.keys(slot)[0];
-
+          {slots.map((slot: Slot, idx: number) => {
             return (
               <div key={idx}>
                 <FormControlLabel
-                  value={time}
+                  value={slot.time}
                   control={<Radio />}
-                  label={time}
+                  label={slot.time + " Hour | "}
                 />
+                <span>
+                  totalAvailable : {slot.totalAvailable} | reserved :{" "}
+                  {slot.reserved} | availableSlot {slot.availableSlot}
+                </span>
               </div>
             );
           })}
         </RadioGroup>
       </FormControl>
-
-      <Button variant="contained" onClick={handleClick}>
-        choose
-      </Button>
+      <div>
+        <Button
+          variant="contained"
+          onClick={() => {
+            console.log("click");
+            handleClickOpen("paper", value);
+          }}
+        >
+          choose
+        </Button>
+      </div>
     </div>
   ) : (
     <div>There is no slots</div>
